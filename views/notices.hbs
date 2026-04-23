@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Електронна дошка оголошень</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+
+        /* ── Tabs ── */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs a {
+            padding: 8px 20px; border-radius: 6px; text-decoration: none;
+            background: #ddd; color: #333; font-weight: bold;
+        }
+        .tabs a.active { background: #333; color: #fff; }
+
+        /* ── Sort ── */
+        .sort-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .sort-bar span { font-weight: bold; }
+        .sort-bar a {
+            padding: 6px 14px; border-radius: 6px; text-decoration: none;
+            background: #ddd; color: #333;
+        }
+        .sort-bar a.active { background: #555; color: #fff; }
+
+        /* ── Notice cards ── */
+        .notices { display: flex; flex-direction: column; gap: 14px; }
+        .notice-card {
+            background: #fff; border-radius: 10px; padding: 18px 22px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-left: 6px solid #333;
+        }
+        .notice-card.high   { border-left-color: #e53935; }
+        .notice-card.medium { border-left-color: #fb8c00; }
+        .notice-card.low    { border-left-color: #43a047; }
+        .notice-card h2 { margin-bottom: 6px; }
+        .notice-meta { font-size: 0.85em; color: #777; margin-bottom: 10px; }
+        .notice-content { margin-bottom: 12px; }
+        .badge {
+            display: inline-block; padding: 2px 10px; border-radius: 12px;
+            font-size: 0.8em; font-weight: bold; margin-right: 6px;
+        }
+        .badge-importance { background: #333; color: #fff; }
+        .badge-archived   { background: #999; color: #fff; }
+        .notice-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn {
+            padding: 6px 16px; border-radius: 6px; border: none;
+            cursor: pointer; font-size: 0.9em; text-decoration: none;
+        }
+        .btn-edit   { background: #1976d2; color: #fff; }
+        .btn-delete { background: #e53935; color: #fff; }
+        .btn-new    { background: #43a047; color: #fff; display: inline-block; margin-bottom: 20px; padding: 10px 22px; }
+
+        /* ── Form ── */
+        .form-card {
+            background: #fff; border-radius: 10px; padding: 28px;
+            max-width: 600px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .form-card h2 { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: bold; font-size: 0.9em; }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 8px 12px; border: 1px solid #ccc;
+            border-radius: 6px; font-size: 1em; width: 100%;
+        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: flex; gap: 16px; }
+        .form-row .form-group { flex: 1; }
+        .btn-submit {
+            background: #333; color: #fff; padding: 10px 28px;
+            border: none; border-radius: 6px; font-size: 1em; cursor: pointer;
+        }
+        .btn-back { color: #555; text-decoration: none; margin-left: 14px; }
+    </style>
+</head>
+<body>
+
+<h1>📋 Дошка оголошень</h1>
+
+{{#if showList}}
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <a href="/notices?status=active&sort={{currentSort}}" 
+           class="{{#if (eq currentStatus 'active')}}active{{/if}}">🟢 Активні</a>
+        <a href="/notices?status=archived&sort={{currentSort}}"
+           class="{{#if (eq currentStatus 'archived')}}active{{/if}}">📦 Архів</a>
+    </div>
+
+    <!-- Sort -->
+    <div class="sort-bar">
+        <span>Сортувати:</span>
+        <a href="/notices?status={{currentStatus}}&sort=importance"
+           class="{{#if (eq currentSort 'importance')}}active{{/if}}">⭐ Важливість</a>
+        <a href="/notices?status={{currentStatus}}&sort=date"
+           class="{{#if (eq currentSort 'date')}}active{{/if}}">📅 Дата</a>
+        <a href="/notices?status={{currentStatus}}&sort=author"
+           class="{{#if (eq currentSort 'author')}}active{{/if}}">👤 Автор</a>
+    </div>
+
+    <a href="/notices/new" class="btn btn-new">+ Нове оголошення</a>
+
+    <div class="notices">
+        {{#each notices}}
+            <div class="notice-card {{#if (gte importance 7)}}high{{else if (gte importance 4)}}medium{{else}}low{{/if}}">
+                <h2>{{title}}</h2>
+                <div class="notice-meta">
+                    👤 {{author}} &nbsp;|&nbsp;
+                    📅 {{start_date}} → {{end_date}}
+                </div>
+                <div class="notice-content">{{content}}</div>
+                <span class="badge badge-importance">⭐ {{importance}}/10</span>
+                {{#if (eq status 'archived')}}<span class="badge badge-archived">Архів</span>{{/if}}
+                <div class="notice-actions">
+                    <a href="/notices/edit/{{id}}" class="btn btn-edit">✏️ Редагувати</a>
+                    <button class="btn btn-delete" onclick="deleteNotice({{id}})">🗑️ Видалити</button>
+                </div>
+            </div>
+        {{else}}
+            <p>Немає оголошень.</p>
+        {{/each}}
+    </div>
+
+{{/if}}
+
+{{#if showForm}}
+    <div class="form-card">
+        <h2>{{#if editingNotice}}✏️ Редагувати оголошення{{else}}+ Нове оголошення{{/if}}</h2>
+
+        <form method="POST" action="{{#if editingNotice}}/notices/edit/{{editingNotice.id}}{{else}}/notices{{/if}}">
+            
+            <div class="form-group">
+                <label>Заголовок</label>
+                <input type="text" name="title" value="{{editingNotice.title}}" required />
+            </div>
+
+            <div class="form-group">
+                <label>Автор оголошення</label>
+                <input type="text" name="author" value="{{editingNotice.author}}" required />
+            </div>
+
+            <div class="form-group">
+                <label>Зміст оголошення</label>
+                <textarea name="content">{{editingNotice.content}}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Важливість (0–10)</label>
+                <input type="number" name="importance" min="0" max="10"
+                       value="{{editingNotice.importance}}" required />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Дата початку показу</label>
+                    <input type="datetime-local" name="start_date"
+                           value="{{editingNotice.start_date}}" required />
+                </div>
+                <div class="form-group">
+                    <label>Дата завершення показу</label>
+                    <input type="datetime-local" name="end_date"
+                           value="{{editingNotice.end_date}}" required />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Статус</label>
+                <select name="status">
+                    <option value="active"    {{#if (eq editingNotice.status 'active')}}selected{{/if}}>🟢 Активне</option>
+                    <option value="archived"  {{#if (eq editingNotice.status 'archived')}}selected{{/if}}>📦 Архів</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                {{#if editingNotice}}Зберегти зміни{{else}}Створити оголошення{{/if}}
+            </button>
+            <a href="/notices" class="btn-back">Скасувати</a>
+        </form>
+    </div>
+{{/if}}
+
+<script>
+    async function deleteNotice(id) {
+        if (!confirm('Видалити оголошення?')) return;
+        const res = await fetch(`/notices/${id}`, { method: 'DELETE' });
+        if (res.ok) window.location.reload();
+        else alert('Помилка видалення');
+    }
+</script>
+
+</body>
+</html>

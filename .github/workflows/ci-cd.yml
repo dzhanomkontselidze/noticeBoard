@@ -1,0 +1,123 @@
+name: CI/CD
+on:
+  push:
+    branches: [ master, prod ]
+  pull_request:
+    branches: [ master, prod ]
+
+jobs:
+  validate-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify .env is not committed
+        run: |
+          if [ -f .env ]; then
+            printf "CRITICAL ERROR: .env file found in repository! Remove it immediately and rotate your secrets.\n"
+            exit 1
+          fi
+
+      - name: Check for required files
+        run: |
+          REQUIRED_FILES=(".env.example" "package.json" "app.js" ".gitignore")
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              printf "ERROR: Required file '$file' is missing.\n"
+              exit 1
+            fi
+          done
+
+      - name: Validate file extensions in specific directories
+        run: |
+          # Check views (only .hbs)
+          if find views -type f ! -name "*.hbs" | grep -q .; then
+            printf "ERROR: Only .hbs files are allowed in the /views directory.\n"
+            find views -type f ! -name "*.hbs"
+            exit 1
+          fi
+          # Check routes (only .js)
+          if find routes -type f ! -name "*.js" | grep -q .; then
+            printf "ERROR: Only .js files are allowed in the /routes directory.\n"
+            find routes -type f ! -name "*.js"
+            exit 1
+          fi
+          # Check stylesheets (only .css)
+          if find public/stylesheets -type f ! -name "*.css" | grep -q .; then
+            printf "ERROR: Only .css files are allowed in /public/stylesheets.\n"
+            find public/stylesheets -type f ! -name "*.css"
+            exit 1
+          fi
+
+  build:
+    needs: validate-structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify build-ready state
+        run: |
+          printf "Structure validated and dependencies installed."
+
+  deploy:
+    needs: [validate-structure, build]
+    if: github.event_name == 'push' && github.repository == 'mp987-gt/students_express' && github.ref == 'refs/heads/prod'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s\n" "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          printf "%s\n" "${{ secrets.SSH_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploying to Production
+        run: |
+          printf "Starting deployment to production server...\n"
+
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes ${{ secrets.SERVER_USERNAME }}@${{ secrets.SERVER_HOST }} \
+            PORT=${{ secrets.PORT }} \
+            SERVER_HOST=${{ secrets.SERVER_HOST }} \
+            'bash -s' << 'EOF'
+            set -euo pipefail
+            
+            printf "Connected to production server as deploy user\n"
+            
+            cd /home/produser/students_express || exit 1
+            
+            printf "Pulling latest changes from prod branch...\n"
+            git pull origin prod
+            
+            printf "Installing production dependencies...\n"
+            npm ci --only=production
+            
+            printf "Restarting the application...\n"
+            pkill -f "node ./bin/www" || true
+            
+            nohup npm start > /dev/null 2>&1 &
+            
+            printf "Waiting for app to start...\n"
+            sleep 10
+            
+            printf "Running check...\n"
+            curl -f "http://${SERVER_HOST}:${PORT}" || exit 1
+            
+            printf "Deployment completed successfully!\n"
+          EOF
+
+          printf "Deployment finished!\n"

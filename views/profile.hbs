@@ -1,0 +1,77 @@
+<div class="viewport">
+  <a href="/notices" class="btn-main">← Back to Board</a>
+
+  <div class="content-wrapper">
+    <div class="logo-placeholder"></div>
+    
+    <h1 class="main-title">
+      Профіль<span class="dot"></span>
+    </h1>
+  </div>
+</div>
+
+<div class="auth-panel">
+  <div class="login-box">
+    <h2>Настройки Профілю</h2>
+    
+    <form action="/profile/update" method="POST">
+      <input type="hidden" name="id" value="{{user.id}}">
+
+      <div class="input-group">
+        <label>Ваше імʼя</label>
+        <input
+          type="text"
+          name="username"
+          value="{{user.username}}"
+          placeholder="Your nickname"
+          required
+        />
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <input
+          type="email"
+          name="email"
+          value="{{user.email}}"
+          placeholder="your@email.com"
+          required
+        />
+      </div>
+
+      <div class="input-group">
+        <label>Новий пароль (leave blank to keep current)</label>
+        <input
+          type="password"
+          name="password"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <div class="input-group" style="border: 1px dashed #ffb300; padding: 15px; border-radius: 12px; margin-top: 20px;">
+        <label style="color: #ffb300; font-weight: bold;">Confirm with Current Password</label>
+        <input
+          type="password"
+          name="current_password"
+          placeholder="Enter current password to save"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-login" style="background: #28a745; margin-top: 20px;">
+        Save Changes <span>✓</span>
+      </button>
+    </form>
+
+    <div class="signup-section" style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+      <p class="signup-text" style="color: #dc3545;">Danger Zone</p>
+      
+      <form action="/profile/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete your account? This will also delete all your notices!');">
+         <input type="hidden" name="id" value="{{user.id}}">
+         <button type="submit" class="btn-signup" style="background: #dc3545; color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; cursor: pointer;">
+           Delete Account
+         </button>
+      </form>
+    </div>
+  </div>
+</div>

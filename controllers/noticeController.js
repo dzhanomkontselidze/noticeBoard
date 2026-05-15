@@ -5,17 +5,17 @@ import db from '../db/connector.js';
 class Notice {
     id;
     title;
-    author;
+    author_id; // Змінено з author на author_id
     content;
     importance;
     start_date;
     end_date;
     status;
 
-    constructor({ id, title, author, content, importance, start_date, end_date, status }) {
+    constructor({ id, title, author_id, content, importance, start_date, end_date, status }) {
         this.id = id;
         this.title = title;
-        this.author = author;
+        this.author_id = author_id; // Тепер це ID профілю
         this.content = content;
         this.importance = importance;
         this.start_date = start_date;
@@ -26,7 +26,7 @@ class Notice {
     toJSON() {
         return {
             title: this.title,
-            author: this.author,
+            author_id: this.author_id, // Оновлено назву ключа
             content: this.content,
             importance: this.importance,
             start_date: this.start_date,
@@ -45,8 +45,9 @@ export class NoticeValidator {
         this.notice = noticeData;
     }
 
+    // Цей метод МАЄ бути тут, щоб validate() міг його викликати
     checkStringField(value, fieldName) {
-        if (!value || value.trim().length < 2) {
+        if (!value || typeof value !== 'string' || value.trim().length < 2) {
             throw new Error(`Поле '${fieldName}' є обов'язковим і має містити принаймні 2 символи.`);
         }
     }
@@ -65,14 +66,15 @@ export class NoticeValidator {
             throw new Error("Дати мають бути коректними.");
         }
         if (endDate <= startDate) {
-            throw new Error("Дата завершення має бути пізніше дати початку.");
+            throw new Error("Дата завершення має бути пізніше за дату початку.");
         }
     }
 
     validate() {
-        const { title, author, importance, start_date, end_date } = this.notice;
+        const { title, importance, start_date, end_date } = this.notice;
+        
+        // Тепер 'this' точно знайде метод вище
         this.checkStringField(title, 'Заголовок');
-        this.checkStringField(author, 'Автор');
         this.checkImportance(importance);
         this.checkDates(start_date, end_date);
     }
@@ -88,15 +90,16 @@ export class NoticeService {
     }
 
     async create() {
-        const { title, author, content, importance, start_date, end_date, status } = this.notice;
+        // Використовуємо таблицю user_notices та поле author_id
+        const { title, author_id, content, importance, start_date, end_date, status } = this.notice;
         try {
             const res = await db.query(`
-                INSERT INTO notices (title, author, content, importance, start_date, end_date, status)
+                INSERT INTO user_notices (title, author_id, content, importance, start_date, end_date, status)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *`,
-                [title, author, content, importance, start_date, end_date, status]
+                [title, author_id, content, importance, start_date, end_date, status]
             );
-            console.log(`✓ Оголошення створено: ${res.rows[0].title}`);
+            console.log(`✓ Оголошення створено в новій таблиці: ${res.rows[0].title}`);
             return res.rows[0];
         } catch (err) {
             console.error('Помилка створення оголошення:', err);
@@ -120,41 +123,41 @@ export class NoticeService {
         if (fields.length === 0) throw new Error('Немає даних для оновлення');
 
         values.push(id);
-        const query = `UPDATE notices SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`;
+        // Змінено назву таблиці на user_notices
+        const query = `UPDATE user_notices SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`;
 
         try {
             const res = await db.query(query, values);
             if (res.rows.length === 0) throw new Error('Оголошення не знайдено');
-            console.log(`✓ Оголошення оновлено: ${res.rows[0].title}`);
             return res.rows[0];
         } catch (err) {
-            console.error('Помилка оновлення оголошення:', err);
+            console.error('Помилка оновлення:', err);
             throw err;
         }
     }
 
     static async delete(id) {
         try {
-            const res = await db.query('DELETE FROM notices WHERE id = $1 RETURNING *', [id]);
+            // Змінено назву таблиці на user_notices
+            const res = await db.query('DELETE FROM user_notices WHERE id = $1 RETURNING *', [id]);
             if (res.rows.length === 0) throw new Error('Оголошення не знайдено');
-            console.log(`✓ Оголошення видалено: ${res.rows[0].title}`);
             return true;
         } catch (err) {
-            console.error('Помилка видалення оголошення:', err);
+            console.error('Помилка видалення:', err);
             throw err;
         }
     }
 
-    // Marks expired notices as archived
     static async archiveExpired() {
         try {
+            // Змінено назву таблиці на user_notices
             const res = await db.query(`
-                UPDATE notices SET status = 'archived'
+                UPDATE user_notices SET status = 'archived'
                 WHERE end_date < NOW() AND status = 'active'
                 RETURNING *`
             );
             if (res.rows.length > 0) {
-                console.log(`✓ Заархівовано ${res.rows.length} оголошень.`);
+                console.log(`✓ Заархівовано ${res.rows.length} оголошень у user_notices.`);
             }
         } catch (err) {
             console.error('Помилка архівації:', err);

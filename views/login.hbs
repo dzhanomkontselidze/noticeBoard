@@ -1,0 +1,58 @@
+<div class="viewport">
+  <a href="/notices" class="btn-main">← Back to Board</a>
+
+  <div class="content-wrapper">
+    <div class="logo-placeholder"></div>
+    
+    <h1 class="main-title">
+      BOARD<br>
+      NET<span class="dot">.</span>
+    </h1>
+  </div>
+</div>
+
+<div class="auth-panel">
+  <div class="login-box">
+    <h2>Log in</h2>
+    
+    <form action="/profile/login" method="POST">
+      <div class="input-group">
+        <label>Username</label>
+        {{#if errors.username}}
+          <span class="error-hint">{{errors.username}}</span>
+        {{/if}}
+        <input
+          type="text"
+          name="username"
+          placeholder="Your nickname"
+          value="{{formData.username}}"
+          class="{{#if errors.username}}invalid-input{{/if}}"
+          required
+        />
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        {{#if errors.password}}
+          <span class="error-hint">{{errors.password}}</span>
+        {{/if}}
+        <input
+          type="password"
+          name="password"
+          placeholder="••••••••"
+          class="{{#if errors.password}}invalid-input{{/if}}"
+          required
+        />
+      </div>
+
+      <button type="submit" class="btn-login">
+        Log in <span>→</span>
+      </button>
+    </form>
+
+    <div class="signup-section">
+      <p class="signup-text">Don't have an account?</p>
+      <a href="/profile/register" class="btn-signup">Create Account</a>
+    </div>
+  </div>
+</div>

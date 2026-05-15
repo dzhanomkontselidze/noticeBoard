@@ -17,13 +17,17 @@ router.get('/', async (req, res) => {
     const validSorts = {
         importance: 'importance DESC',
         date: 'start_date ASC',
-        author: 'author ASC'
+        author: 'username ASC'
     };
     const orderBy = validSorts[sort] || 'importance DESC';
 
     try {
         const result = await db.query(
-            `SELECT * FROM notices WHERE status = $1 ORDER BY ${orderBy}`,
+            `SELECT un.*, p.username as author_name 
+             FROM user_notices un
+             JOIN profiles p ON un.author_id = p.id
+             WHERE un.status = $1 
+             ORDER BY ${orderBy}`,
             [status]
         );
         res.render('notices', {
@@ -51,7 +55,7 @@ router.get('/new', (req, res) => {
 // ─── Create notice ────────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
     try {
-        new NoticeValidator(req.body).validate();
+            new NoticeValidator(req.body).validate();
         await new NoticeService(req.body).create();
         res.redirect('/notices');
     } catch (err) {
@@ -63,7 +67,7 @@ router.post('/', async (req, res) => {
 // ─── Edit notice form ─────────────────────────────────────────────────────────
 router.get('/edit/:id', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM notices WHERE id = $1', [req.params.id]);
+        const result = await db.query('SELECT * FROM user_notices WHERE id = $1', [req.params.id]);
         if (result.rows.length === 0) return res.status(404).send('Оголошення не знайдено');
 
         res.render('notices', {
@@ -93,11 +97,25 @@ router.post('/edit/:id', async (req, res) => {
 // ─── Delete notice ────────────────────────────────────────────────────────────
 router.delete('/:id', async (req, res) => {
     try {
-        await NoticeService.delete(req.params.id);
-        res.status(200).json({ message: 'Оголошення видалено!' });
+        const noticeId = req.params.id;
+        const userId = req.session.user ? req.session.user.id : null;
+
+        if (!userId) {
+            return res.status(401).json({ error: "Увійдіть в систему" });
+        }
+
+        const result = await db.query(
+            'DELETE FROM user_notices WHERE id = $1 AND author_id = $2 RETURNING *',
+            [noticeId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(403).json({ error: "Це не ваше оголошення!" });
+        }
+
+        res.sendStatus(200);
     } catch (err) {
-        console.error('Помилка видалення:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).send(err.message);
     }
 });
 

@@ -6,9 +6,10 @@ import express from 'express'
 import path from 'path'
 import cookieParser from 'cookie-parser'
 import logger from 'morgan'
+import session from 'express-session'; 
 
 import noticeRouter from './routes/notices.js'
-
+import profileRouter from './routes/profile.js'; 
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,25 +34,38 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({
+  secret: 'board-secret-key', 
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } 
+}));
+
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null; 
+  next();
+});
+
 app.use('/notices', noticeRouter);
+app.use('/profile', profileRouter);
 
 app.use((err, req, res, next) => {
-  console.error('Global error caught:', err || 'Unknown error');
-
+  if (err.status === 404) return next(err);
+  console.error('Global error caught:', err.message || err);
   res.status(500).render('error', { 
-    message: 'Something went wrong',
+    message: err.message || 'Something went wrong',
     error: process.env.NODE_ENV === 'development' ? err : {} 
   });
 });
+
 app.use(function (req, res, next) {
   next(createError(404));
 });
 
 app.use(function (err, req, res, next) {
-
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
   res.status(err.status || 500);
   res.render('error');
 });

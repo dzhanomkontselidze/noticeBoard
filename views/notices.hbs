@@ -2,28 +2,60 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Електронна дошка оголошень</title>
+    <title>Boards — Дошка оголошень</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-        h1 { margin-bottom: 20px; }
+
+        /* ── Header & Auth ── */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #fff; 
+            padding: 20px 30px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            margin-bottom: 30px; 
+            border-radius: 12px;
+        }
+        .logo { font-size: 24px; font-weight: bold; color: #333; text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: #e53935; }
+        .auth-controls { display: flex; gap: 12px; align-items: center; }
+        .user-name { color: #666; font-size: 0.9em; }
+
+        .btn, .tabs a, .sort-bar a, .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; 
+            text-decoration: none;
+            transition: 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn img, .tabs a img, .sort-bar a img, .badge img {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
 
         /* ── Tabs ── */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tabs a {
-            padding: 8px 20px; border-radius: 6px; text-decoration: none;
+            padding: 10px 20px; border-radius: 8px; 
             background: #ddd; color: #333; font-weight: bold;
         }
-        .tabs a.active { background: #333; color: #fff; }
+        .tabs a.active { background: #333 !important; color: #fff !important; }
 
         /* ── Sort ── */
         .sort-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
         .sort-bar span { font-weight: bold; }
         .sort-bar a {
-            padding: 6px 14px; border-radius: 6px; text-decoration: none;
+            padding: 8px 16px; border-radius: 8px;
             background: #ddd; color: #333;
         }
-        .sort-bar a.active { background: #555; color: #fff; }
+        .sort-bar a.active { background: #555 !important; color: #fff !important; }
 
         /* ── Notice cards ── */
         .notices { display: flex; flex-direction: column; gap: 14px; }
@@ -38,159 +70,208 @@
         .notice-card h2 { margin-bottom: 6px; }
         .notice-meta { font-size: 0.85em; color: #777; margin-bottom: 10px; }
         .notice-content { margin-bottom: 12px; }
+        
         .badge {
-            display: inline-block; padding: 2px 10px; border-radius: 12px;
+            padding: 4px 12px; border-radius: 12px;
             font-size: 0.8em; font-weight: bold; margin-right: 6px;
         }
-        .badge-importance { background: #333; color: #fff; }
+        .badge-importance { background: #eee; color: #333; }
         .badge-archived   { background: #999; color: #fff; }
-        .notice-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .btn {
-            padding: 6px 16px; border-radius: 6px; border: none;
-            cursor: pointer; font-size: 0.9em; text-decoration: none;
-        }
-        .btn-edit   { background: #1976d2; color: #fff; }
-        .btn-delete { background: #e53935; color: #fff; }
-        .btn-new    { background: #43a047; color: #fff; display: inline-block; margin-bottom: 20px; padding: 10px 22px; }
+        
+        .notice-actions { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+
+        /* ── Buttons Colors ── */
+        .btn-dark   { background: #333; color: #fff; padding: 8px 18px; border-radius: 6px; }
+        .btn-light  { background: #eee; color: #333; padding: 8px 18px; border-radius: 6px; }
+        .btn-edit   { background: #1976d2; color: #fff; padding: 8px 16px; border-radius: 6px; }
+        .btn-delete { background: #e53935; color: #fff; padding: 8px 16px; border-radius: 6px; }
+        .btn-new    { background: #43a047; color: #fff; margin-bottom: 20px; padding: 12px 24px; font-weight: bold; border-radius: 8px; }
+        .btn:hover { opacity: 0.85; }
 
         /* ── Form ── */
         .form-card {
             background: #fff; border-radius: 10px; padding: 28px;
             max-width: 600px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin: 0 auto;
         }
-        .form-card h2 { margin-bottom: 20px; }
+        .form-card h2 { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-weight: bold; font-size: 0.9em; }
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            padding: 8px 12px; border: 1px solid #ccc;
-            border-radius: 6px; font-size: 1em; width: 100%;
+        .form-group input, .form-group textarea, .form-group select {
+            padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1em; width: 100%;
         }
-        .form-group textarea { resize: vertical; min-height: 80px; }
         .form-row { display: flex; gap: 16px; }
         .form-row .form-group { flex: 1; }
-        .btn-submit {
-            background: #333; color: #fff; padding: 10px 28px;
-            border: none; border-radius: 6px; font-size: 1em; cursor: pointer;
-        }
-        .btn-back { color: #555; text-decoration: none; margin-left: 14px; }
+        .btn-submit { background: #333; color: #fff; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<h1>📋 Дошка оголошень</h1>
+    <header>
+        <a href="/notices" class="logo">📋 BoardNet<span>.</span></a>
+        
+        <div class="auth-controls">
+            {{#if user}}
+                <span class="user-name">Привіт, <b>{{user.username}}</b></span>
+                <a href="/profile/my-profile" class="btn btn-dark"> Profile</a>
+                <a href="/profile/logout" class="btn btn-light"> Log out</a>
+            {{else}}
+                <a href="/profile/login" class="btn btn-dark"> Log in</a>
+                <a href="/profile/register" class="btn btn-light"> Sign up</a>
+            {{/if}}
+        </div>
+    </header>
 
-{{#if showList}}
+    {{#if showList}}
 
-    <!-- Tabs -->
-    <div class="tabs">
-        <a href="/notices?status=active&sort={{currentSort}}" 
-           class="{{#if (eq currentStatus 'active')}}active{{/if}}">🟢 Активні</a>
-        <a href="/notices?status=archived&sort={{currentSort}}"
-           class="{{#if (eq currentStatus 'archived')}}active{{/if}}">📦 Архів</a>
-    </div>
+        <div class="tabs">
+            <a href="/notices?status=active&sort={{currentSort}}" 
+               class="{{#if (eq currentStatus 'active')}}active{{/if}}">
+               <img src="/active.svg"> Активні
+            </a>
+            <a href="/notices?status=archived&sort={{currentSort}}"
+               class="{{#if (eq currentStatus 'archived')}}active{{/if}}">
+               <img src="/box.svg"> Архів
+            </a>
+        </div>
 
-    <!-- Sort -->
-    <div class="sort-bar">
-        <span>Сортувати:</span>
-        <a href="/notices?status={{currentStatus}}&sort=importance"
-           class="{{#if (eq currentSort 'importance')}}active{{/if}}">⭐ Важливість</a>
-        <a href="/notices?status={{currentStatus}}&sort=date"
-           class="{{#if (eq currentSort 'date')}}active{{/if}}">📅 Дата</a>
-        <a href="/notices?status={{currentStatus}}&sort=author"
-           class="{{#if (eq currentSort 'author')}}active{{/if}}">👤 Автор</a>
-    </div>
+        <div class="sort-bar">
+            <span>Сортувати:</span>
+            <a href="/notices?status={{currentStatus}}&sort=importance" 
+               class="{{#if (eq currentSort 'importance')}}active{{/if}}">
+               <img src="/poll.svg"> Важливість
+            </a>
+            <a href="/notices?status={{currentStatus}}&sort=date"
+               class="{{#if (eq currentSort 'date')}}active{{/if}}">
+               <img src="/calendar-dates.svg"> Дата
+            </a>
+            <a href="/notices?status={{currentStatus}}&sort=author"
+               class="{{#if (eq currentSort 'author')}}active{{/if}}">
+               <img src="/girl.svg"> Автор
+            </a>
+        </div>
 
-    <a href="/notices/new" class="btn btn-new">+ Нове оголошення</a>
+        <a href="/notices/new" class="btn btn-new">+ Нове оголошення</a>
 
-    <div class="notices">
-        {{#each notices}}
-            <div class="notice-card {{#if (gte importance 7)}}high{{else if (gte importance 4)}}medium{{else}}low{{/if}}">
-                <h2>{{title}}</h2>
-                <div class="notice-meta">
-                    👤 {{author}} &nbsp;|&nbsp;
-                    📅 {{start_date}} → {{end_date}}
+        <div class="notices">
+            {{#each notices}}
+                <div class="notice-card {{#if (gte importance 7)}}high{{else if (gte importance 4)}}medium{{else}}low{{/if}}">
+                    <h2>{{title}}</h2>
+                    <div class="notice-meta">
+                        <img src="/girl.svg" style=" vertical-align: middle;"> {{author_name}} &nbsp;|&nbsp; 
+                        <img src="/calendar-dates.svg" style=" vertical-align: middle;"> {{start_date}} → {{end_date}}
+                    </div>
+                    <div class="notice-content">{{content}}</div>
+                    
+                    <span class="badge badge-importance">
+                        <img src="/poll.svg" style=" vertical-align: middle;"> {{importance}}/10
+                    </span>
+
+                    {{#if (eq status 'archived')}}
+                        <span class="badge badge-archived"> Архів</span>
+                    {{/if}}
+                    
+                    <div class="notice-actions">
+                        {{#if (eq author_id ../user.id)}}
+                            <a href="/notices/edit/{{id}}" class="btn btn-edit">
+                                <img src="/pen.svg" style=" vertical-align: middle;"> Редагувати
+                            </a>
+                            <button class="btn btn-delete" onclick="deleteNotice({{id}})">
+                                <img src="/bitbucket.svg" style=" vertical-align: middle;"> Видалити
+                            </button>
+                        {{else}}
+                            <span style="color: #999; font-size: 0.85em;">👁️ Тільки перегляд</span>
+                        {{/if}}
+                    </div>
                 </div>
-                <div class="notice-content">{{content}}</div>
-                <span class="badge badge-importance">⭐ {{importance}}/10</span>
-                {{#if (eq status 'archived')}}<span class="badge badge-archived">Архів</span>{{/if}}
-                <div class="notice-actions">
-                    <a href="/notices/edit/{{id}}" class="btn btn-edit">✏️ Редагувати</a>
-                    <button class="btn btn-delete" onclick="deleteNotice({{id}})">🗑️ Видалити</button>
-                </div>
-            </div>
-        {{else}}
-            <p>Немає оголошень.</p>
-        {{/each}}
-    </div>
+            {{else}}
+                <p>Немає оголошень.</p>
+            {{/each}}
+        </div>
 
-{{/if}}
+    {{/if}}
 
-{{#if showForm}}
-    <div class="form-card">
-        <h2>{{#if editingNotice}}✏️ Редагувати оголошення{{else}}+ Нове оголошення{{/if}}</h2>
+    {{#if showForm}}
+        <div class="form-card">
+            <h2>
+                {{#if editingNotice}}
+                    <img src="/pen.svg"> Редагувати оголошення
+                {{else}}
+                    Нове оголошення
+                {{/if}}
+            </h2>
 
-        <form method="POST" action="{{#if editingNotice}}/notices/edit/{{editingNotice.id}}{{else}}/notices{{/if}}">
-            
-            <div class="form-group">
-                <label>Заголовок</label>
-                <input type="text" name="title" value="{{editingNotice.title}}" required />
-            </div>
-
-            <div class="form-group">
-                <label>Автор оголошення</label>
-                <input type="text" name="author" value="{{editingNotice.author}}" required />
-            </div>
-
-            <div class="form-group">
-                <label>Зміст оголошення</label>
-                <textarea name="content">{{editingNotice.content}}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Важливість (0–10)</label>
-                <input type="number" name="importance" min="0" max="10"
-                       value="{{editingNotice.importance}}" required />
-            </div>
-
-            <div class="form-row">
+            <form method="POST" action="{{#if editingNotice}}/notices/edit/{{editingNotice.id}}{{else}}/notices{{/if}}">
+                
                 <div class="form-group">
-                    <label>Дата початку показу</label>
-                    <input type="datetime-local" name="start_date"
-                           value="{{editingNotice.start_date}}" required />
+                    <label>Заголовок</label>
+                    <input type="text" name="title" value="{{editingNotice.title}}" required />
                 </div>
+
                 <div class="form-group">
-                    <label>Дата завершення показу</label>
-                    <input type="datetime-local" name="end_date"
-                           value="{{editingNotice.end_date}}" required />
+                    <label>Автор оголошення</label>
+                    {{#if user}}
+                        <input type="text" value="{{user.username}}" disabled style="background: #eee;" />
+                        <input type="hidden" name="author_id" value="{{user.id}}" />
+                    {{else}}
+                        <p style="color: #e53935; font-size: 0.85em;">
+                            <img src="/danger.svg" style=" vertical-align: middle;"> Ви повинні <a href="/profile/login">увійти</a>, щоб створювати оголошення.
+                        </p>
+                    {{/if}}
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Статус</label>
-                <select name="status">
-                    <option value="active"    {{#if (eq editingNotice.status 'active')}}selected{{/if}}>🟢 Активне</option>
-                    <option value="archived"  {{#if (eq editingNotice.status 'archived')}}selected{{/if}}>📦 Архів</option>
-                </select>
-            </div>
+                <div class="form-group">
+                    <label>Зміст оголошення</label>
+                    <textarea name="content" rows="4">{{editingNotice.content}}</textarea>
+                </div>
 
-            <button type="submit" class="btn-submit">
-                {{#if editingNotice}}Зберегти зміни{{else}}Створити оголошення{{/if}}
-            </button>
-            <a href="/notices" class="btn-back">Скасувати</a>
-        </form>
-    </div>
-{{/if}}
+                <div class="form-group">
+                    <label>Важливість (0–10)</label>
+                    <input type="number" name="importance" min="0" max="10"
+                           value="{{editingNotice.importance}}" required />
+                </div>
 
-<script>
-    async function deleteNotice(id) {
-        if (!confirm('Видалити оголошення?')) return;
-        const res = await fetch(`/notices/${id}`, { method: 'DELETE' });
-        if (res.ok) window.location.reload();
-        else alert('Помилка видалення');
-    }
-</script>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата початку показу</label>
+                        <input type="datetime-local" name="start_date"
+                               value="{{editingNotice.start_date}}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Дата завершення показу</label>
+                        <input type="datetime-local" name="end_date"
+                               value="{{editingNotice.end_date}}" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select name="status">
+                        <option value="active" {{#if (eq editingNotice.status 'active')}}selected{{/if}}> Активне</option>
+                        <option value="archived" {{#if (eq editingNotice.status 'archived')}}selected{{/if}}> Архів</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit" {{#unless user}}disabled style="opacity: 0.5;"{{/unless}}>
+                    {{#if editingNotice}}Зберегти зміни{{else}}Створити оголошення{{/if}}
+                </button>
+                <a href="/notices" class="btn btn-light" style="margin-left: 10px;">Скасувати</a>
+            </form>
+        </div>
+    {{/if}}
+
+    <script>
+        async function deleteNotice(id) {
+            if (!confirm('Видалити оголошення?')) return;
+            const res = await fetch(`/notices/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Помилка видалення');
+            }
+        }
+    </script>
 
 </body>
 </html>
